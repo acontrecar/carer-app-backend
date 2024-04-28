@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -59,13 +63,26 @@ export class AuthService {
     return { user: user, token: this.gwtJwtToken({ id: user.id }) };
   }
 
-  private gwtJwtToken(payload: JwtPayload) {
+  public gwtJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async findAll() {
+    const users = await this.userRepository.find({});
+
+    return { users };
+  }
+
+  async findUserById(id: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user)
+      throw new NotFoundException(
+        `No se ha encontrado el usuario con id ${id}`,
+      );
+
+    return user;
   }
 
   findOne(id: number) {
